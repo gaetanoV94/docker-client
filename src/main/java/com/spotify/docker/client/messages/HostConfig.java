@@ -22,6 +22,7 @@ package com.spotify.docker.client.messages;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
@@ -627,7 +628,22 @@ public abstract class HostConfig {
     
     public abstract Builder storageOpt(Map<String, String> tmpfs);
 
-    public abstract HostConfig build();
+    abstract HostConfig autoBuild();
+
+    public HostConfig build() {
+      final HostConfig hostConfig = autoBuild();
+      validateExtraHosts(hostConfig.extraHosts());
+      return hostConfig;
+    }
+  }
+
+  private static void validateExtraHosts(final List<String> extraHosts) {
+    if (extraHosts != null) {
+      for (final String extraHost : extraHosts) {
+        checkArgument(extraHost.contains(":"),
+            String.format("extra host arg '%s' must contain a ':'", extraHost));
+      }
+    }
   }
 
   @AutoValue
